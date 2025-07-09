@@ -1,5 +1,8 @@
 // api server for processing the stock data
 
+require('dotenv').config(); // This line loads the .env file
+// use process.env to access variables in there
+
 //sets up express by importing, creating an instance and then setting the port
 const express = require('express');
 const app = express();
@@ -33,14 +36,33 @@ app.use(express.json());
  * @description Handles GET requests to /api/data and sends JSON data.
  */
 app.get('/api/data', (req, res) => {
-    const data = {
-        message: 'This is some JSON data',
-        timestamp: new Date().toISOString(),
-        items: ['item1', 'item2', 'item3']
-    };
-    // res.json() automatically sets Content-Type to application/json
-    // and stringifies the JavaScript object.
-    res.json(data);
+    
+    
+    symbol = req.query.symbol
+
+
+    'use strict';
+    var request = require('request');
+
+    // replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
+    var url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=5min&apikey=${process.env.API_KEY}`;
+
+    request.get({
+        url: url,
+        json: true,
+        headers: {'User-Agent': 'request'}
+    }, (err, res, data) => {
+        if (err) {
+        console.log('Error:', err);
+        } else if (res.statusCode !== 200) {
+        console.log('Status:', res.statusCode);
+        } else {
+        // data is successfully parsed as a JSON object:
+        console.log(data);
+        res.json(data);
+
+        }
+    });
 });
 
 // --- Error Handling (Middleware for 404 Not Found) ---
