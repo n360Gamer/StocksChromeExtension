@@ -1,0 +1,11 @@
+{
+  "name": "Stock Market Watcher",
+  "version": "1.0.0",
+  "description": "Watches a stock on the market",
+  "manifest_version": 3,
+  "author": "Nathan",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Stock Market"
+  }
+}
