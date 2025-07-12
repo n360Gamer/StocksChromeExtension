@@ -25,14 +25,12 @@ app.use((req, res, next) => {
 // It populates req.body with the parsed JSON data.
 app.use(express.json());
 
-
-
-
 async function GetStockData(symbol) {
   try {
+    // Ensure you have an API_KEY set in your .env file
     var url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=5min&apikey=${process.env.API_KEY}`;
     const response = await axios.get(url);
-    console.log("Fetched posts:", response.data);
+    // console.log("Fetched posts:", response.data);
     // response.data contains the parsed JSON response
     // response.status contains the HTTP status code (e.g., 200)
     // response.headers contains the response headers
@@ -41,12 +39,12 @@ async function GetStockData(symbol) {
     return response.data;
   } catch (error) {
     console.error(
-      "Error fetching posts:",
+      "Error fetching stock data:",
       error.message
     );
+    throw error;
   }
 }
-
 
 // --- Routes ---
 // Routes define how the application responds to a client request to a particular
@@ -58,22 +56,48 @@ async function GetStockData(symbol) {
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  */
+app.get("/", (req, res) => {
+  res.send(
+    "<h1>Welcome to the Stock Data API!</h1><p>Try /api/data?symbol=IBM</p>"
+  );
+});
 
 /**
  * @route GET /api/data
  * @description Handles GET requests to /api/data and sends JSON data.
  */
-app.get("/api/data", (req, res) => {
-  symbol = req.query.symbol;
+app.get("/api/data", async (req, res) => {
+  // Made the callback function async
+  const symbol = req.query.symbol;
+
+  if (!symbol) {
+    return res
+      .status(400)
+      .json({
+        error:
+          "Symbol query parameter is required.",
+      });
+  }
 
   //http://localhost:3000/api/data?symbol=MSFT
 
-  ("use strict");
-
-  // replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
-    req.query.data(GetStockData(symbol))
+  try {
+    // Await the promise returned by GetStockData
+    const data = await GetStockData(symbol);
+    console.log("Data to be sent:", data); // Log the actual data
+    res.json(data);
+  } catch (error) {
+    console.error(
+      "Error in /api/data route:",
+      error.message
+    );
+    res
+      .status(500)
+      .json({
+        error: "Failed to fetch stock data.",
+      });
+  }
 });
-
 
 // --- Error Handling (Middleware for 404 Not Found) ---
 // This middleware will be executed if no other route matches the request.
@@ -91,6 +115,6 @@ app.listen(PORT, () => {
   );
   console.log("Try visiting:");
   console.log(
-    `- http://localhost:${PORT}/api/data`
+    `- http://localhost:${PORT}/api/data?symbol=IBM` // Added a sample symbol
   );
 });
