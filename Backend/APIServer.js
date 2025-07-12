@@ -1,24 +1,52 @@
 // api server for processing the stock data
 
-require('dotenv').config(); // This line loads the .env file
+require("dotenv").config(); // This line loads the .env file
 // use process.env to access variables in there
 
 //sets up express by importing, creating an instance and then setting the port
-const express = require('express');
+const express = require("express");
 const app = express();
 const PORT = 3000;
+const axios = require("axios");
 
 // This middleware logs the method and URL of every incoming request.
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    // 'next()' passes control to the next middleware function or route handler.
-    // Without next(), the request would hang.
-    next();
+  console.log(
+    `[${new Date().toISOString()}] ${
+      req.method
+    } ${req.url}`
+  );
+  // 'next()' passes control to the next middleware function or route handler.
+  // Without next(), the request would hang.
+  next();
 });
 
 // This is essential for handling data sent from clients (e.g., in POST requests).
 // It populates req.body with the parsed JSON data.
 app.use(express.json());
+
+
+
+
+async function GetStockData(symbol) {
+  try {
+    var url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=5min&apikey=${process.env.API_KEY}`;
+    const response = await axios.get(url);
+    console.log("Fetched posts:", response.data);
+    // response.data contains the parsed JSON response
+    // response.status contains the HTTP status code (e.g., 200)
+    // response.headers contains the response headers
+    // response.config contains the request configuration
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error fetching posts:",
+      error.message
+    );
+  }
+}
+
 
 // --- Routes ---
 // Routes define how the application responds to a client request to a particular
@@ -35,46 +63,34 @@ app.use(express.json());
  * @route GET /api/data
  * @description Handles GET requests to /api/data and sends JSON data.
  */
-app.get('/api/data', (req, res) => {
-    
-    
-    symbol = req.query.symbol
+app.get("/api/data", (req, res) => {
+  symbol = req.query.symbol;
 
+  //http://localhost:3000/api/data?symbol=MSFT
 
-    'use strict';
-    var request = require('request');
+  ("use strict");
 
-    // replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
-    var url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=5min&apikey=${process.env.API_KEY}`;
-
-    request.get({
-        url: url,
-        json: true,
-        headers: {'User-Agent': 'request'}
-    }, (err, res, data) => {
-        if (err) {
-        console.log('Error:', err);
-        } else if (res.statusCode !== 200) {
-        console.log('Status:', res.statusCode);
-        } else {
-        // data is successfully parsed as a JSON object:
-        console.log(data);
-        res.json(data);
-
-        }
-    });
+  // replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
+    req.query.data(GetStockData(symbol))
 });
+
 
 // --- Error Handling (Middleware for 404 Not Found) ---
 // This middleware will be executed if no other route matches the request.
 app.use((req, res) => {
-    res.status(404).send('<h1>404 Not Found</h1><p>The page you requested could not be found.</p>');
+  res
+    .status(404)
+    .send(
+      "<h1>404 Not Found</h1><p>The page you requested could not be found.</p>"
+    );
 });
-
 
 app.listen(PORT, () => {
-    console.log(`Express server running at http://localhost:${PORT}/`);
-    console.log('Try visiting:');
-    console.log(`- http://localhost:${PORT}/api/data`);
+  console.log(
+    `Express server running at http://localhost:${PORT}/`
+  );
+  console.log("Try visiting:");
+  console.log(
+    `- http://localhost:${PORT}/api/data`
+  );
 });
-
